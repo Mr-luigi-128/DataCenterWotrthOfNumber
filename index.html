@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Center Number Streamer</title>
+    <style>
+        body {
+            background-color: #050505;
+            color: #00ff66;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #container {
+            width: 90%;
+            max-width: 800px;
+            background: #111;
+            padding: 20px;
+            border: 2px solid #00ff66;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
+        }
+        h1 {
+            font-size: 1.2rem;
+            margin-top: 0;
+            border-bottom: 1px solid #00ff66;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        #stream {
+            font-size: 1.5rem;
+            word-wrap: break-word;
+            word-break: break-all;
+            height: 300px;
+            overflow: hidden;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <h1>Streaming Data Center RAM Value (Starts with 3957...)</h1>
+    <div id="stream">3957</div>
+</div>
+
+<script>
+    const streamDiv = document.getElementById('stream');
+    const maxCharacters = 1000; // Keeps browser RAM perfectly safe
+
+    function generateDigits() {
+        // Generate a chunk of random digits to simulate the ongoing number
+        let chunk = '';
+        for (let i = 0; i < 50; i++) {
+            chunk += Math.floor(Math.random() * 10);
+        }
+
+        // Add new digits to the display
+        streamDiv.innerText += chunk;
+
+        // Truncate the oldest digits from the front so the browser never crashes
+        if (streamDiv.innerText.length > maxCharacters) {
+            streamDiv.innerText = streamDiv.innerText.slice(-maxCharacters);
+        }
+
+        // Run continuously at 60+ frames per second
+        requestAnimationFrame(generateDigits);
+    }
+
+    // Start the generation loop
+    generateDigits();
+</script>
+
+</body>
+</html>
