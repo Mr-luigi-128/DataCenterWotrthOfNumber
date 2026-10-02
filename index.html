@@ -3,78 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Center Number Streamer</title>
+    <title>Infinite Data Center Number Scroll</title>
     <style>
         body {
-            background-color: #050505;
+            margin: 0;
+            background-color: #0a0a0a;
             color: #00ff66;
             font-family: 'Courier New', Courier, monospace;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
+            overflow-x: hidden;
         }
-        #container {
-            width: 90%;
-            max-width: 800px;
-            background: #111;
-            padding: 20px;
-            border: 2px solid #00ff66;
-            box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
+
+        /* Fake container to force a massive scrollbar */
+        #scroll-container {
+            height: 1000000px; /* Gives you a massive track to scroll through */
+            width: 100%;
+            position: relative;
         }
+
+        /* Fixed HUD overlay */
+        #hud {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(17, 17, 17, 0.95);
+            padding: 15px 20px;
+            border: 1px solid #00ff66;
+            border-radius: 4px;
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+        }
+
         h1 {
-            font-size: 1.2rem;
-            margin-top: 0;
-            border-bottom: 1px solid #00ff66;
-            padding-bottom: 10px;
+            font-size: 1.1rem;
+            margin: 0 0 8px 0;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
         }
-        #stream {
-            font-size: 1.5rem;
+
+        .stats {
+            font-size: 0.85rem;
+            color: #88ffaa;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* The viewport where the text actually lives */
+        #view-window {
+            position: fixed;
+            top: 110px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            font-size: 1.35rem;
+            line-height: 1.5;
             word-wrap: break-word;
             word-break: break-all;
-            height: 300px;
             overflow: hidden;
-            line-height: 1.4;
+        }
+
+        .highlight {
+            color: #ffffff;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-<div id="container">
-    <h1>Streaming Data Center RAM Value (Starts with 3957...)</h1>
-    <div id="stream">3957</div>
+<div id="hud">
+    <h1>Data Center RAM Pool Integer (2<sup>800,000,000,000,000,000</sup> - 1)</h1>
+    <div class="stats">
+        <div>Scroll Depth: <span id="depth-pct" class="highlight">0.00%</span></div>
+        <div>Estimated Digit Index: <span id="digit-index" class="highlight">0</span></div>
+        <div>Browser RAM Usage: <span class="highlight">Perfectly Safe</span></div>
+    </div>
+</div>
+
+<div id="scroll-container">
+    <div id="view-window">
+        <!-- Digits will be dynamically injected here -->
+    </div>
 </div>
 
 <script>
-    const streamDiv = document.getElementById('stream');
-    const maxCharacters = 1000; // Keeps browser RAM perfectly safe
+    const viewWindow = document.getElementById('view-window');
+    const depthPctSpan = document.getElementById('depth-pct');
+    const digitIndexSpan = document.getElementById('digit-index');
 
-    function generateDigits() {
-        // Generate a chunk of random digits to simulate the ongoing number
-        let chunk = '';
-        for (let i = 0; i < 50; i++) {
-            chunk += Math.floor(Math.random() * 10);
-        }
+    // Total actual decimal digits in the true number
+    const TOTAL_DIGITS = 240823996531184942n; 
 
-        // Add new digits to the display
-        streamDiv.innerText += chunk;
+    // Character length of our viewport text pool
+    const CHARS_TO_RENDER = 3000;
 
-        // Truncate the oldest digits from the front so the browser never crashes
-        if (streamDiv.innerText.length > maxCharacters) {
-            streamDiv.innerText = streamDiv.innerText.slice(-maxCharacters);
-        }
-
-        // Run continuously at 60+ frames per second
-        requestAnimationFrame(generateDigits);
+    // Simple pseudo-random generator based on seed to keep digits consistent while scrolling
+    function checkDigitValue(index) {
+        if (index === 0n) return '3';
+        if (index === 1n) return '9';
+        if (index === 2n) return '5';
+        if (index === 3n) return '7';
+        
+        // Deterministic hash based on index so scrolling up/down shows the exact same numbers
+        let x = Number(index % 123456789n);
+        let digit = Math.abs(Math.sin(x) * 1000) % 10;
+        return Math.floor(digit).toString();
     }
 
-    // Start the generation loop
-    generateDigits();
+    function renderView() {
+        const scrollTop = window.scrollY;
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        
+        // Calculate scroll percentage
+        const scrollPercent = maxScroll > 0 ? scrollTop / maxScroll : 0;
+        depthPctSpan.innerText = (scrollPercent * 100).toFixed(4) + '%';
+
+        // Calculate current starting digit index using BigInt to handle the massive size
+        const currentStartIndex = BigInt(Math.floor(scrollPercent * Number(TOTAL_DIGITS - BigInt(CHARS_TO_RENDER))));
+        digitIndexSpan.innerText = currentStartIndex.toLocaleString();
+
+        // Build the text block dynamically
+        let outputText = '';
+        for (let i = 0n; i < BigInt(CHARS_TO_RENDER); i++) {
+            outputText += checkDigitValue(currentStartIndex + i);
+        }
+
+        viewWindow.innerText = outputText;
+    }
+
+    // Handle scroll events
+    window.addEventListener('scroll', renderView);
+    // Initial draw
+    renderView();
 </script>
 
 </body>
